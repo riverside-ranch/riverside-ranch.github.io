@@ -1,6 +1,6 @@
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-  query, where, orderBy, limit as fbLimit, Timestamp, serverTimestamp,
+  query, orderBy, limit as fbLimit, serverTimestamp,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
@@ -26,11 +26,10 @@ async function logActivity(userId, userName, action, entityType, entityId) {
 
 export const orders = {
   async list({ status, search } = {}) {
-    const constraints = [orderBy('createdAt', 'desc')];
-    if (status) constraints.unshift(where('status', '==', status));
-
-    const snap = await getDocs(query(collection(db, 'orders'), ...constraints));
+    const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
     let data = snapsToData(snap);
+
+    if (status) data = data.filter(o => o.status === status);
 
     if (search) {
       const s = search.toLowerCase();
@@ -114,11 +113,10 @@ export const orders = {
 
 export const quotes = {
   async list({ status, search } = {}) {
-    const constraints = [orderBy('createdAt', 'desc')];
-    if (status) constraints.unshift(where('status', '==', status));
-
-    const snap = await getDocs(query(collection(db, 'quotes'), ...constraints));
+    const snap = await getDocs(query(collection(db, 'quotes'), orderBy('createdAt', 'desc')));
     let data = snapsToData(snap);
+
+    if (status) data = data.filter(q => q.status === status);
 
     if (search) {
       const s = search.toLowerCase();
@@ -198,12 +196,13 @@ export const quotes = {
 
 export const logs = {
   async list({ category, max } = {}) {
-    const constraints = [orderBy('createdAt', 'desc')];
-    if (category && category !== 'all') constraints.unshift(where('category', '==', category));
-    if (max) constraints.push(fbLimit(max));
+    const snap = await getDocs(query(collection(db, 'misc_logs'), orderBy('createdAt', 'desc')));
+    let data = snapsToData(snap);
 
-    const snap = await getDocs(query(collection(db, 'misc_logs'), ...constraints));
-    return snapsToData(snap);
+    if (category && category !== 'all') data = data.filter(l => l.category === category);
+    if (max) data = data.slice(0, max);
+
+    return data;
   },
 
   async create(data, user) {

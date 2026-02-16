@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { orders, logs, todos as todosApi, activity as activityApi } from '../lib/api';
+// Stats are computed client-side from the full orders list to avoid needing Firestore composite indexes
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import PageHeader from '../components/ui/PageHeader';
@@ -23,15 +24,39 @@ export default function DashboardPage() {
 
   async function loadDashboard() {
     try {
-      const [statsRes, ordersRes, logsRes, todosRes, actRes] = await Promise.all([
-        orders.stats(),
-        orders.list({ status: 'outstanding' }),
+      // Fetch all data independently so one failure doesn't crash everything
+      const results = await Promise.allSettled([
+        orders.list(),
         logs.list({ max: 10 }),
         todosApi.list(),
         activityApi.list({ max: 10 }),
       ]);
-      setStats(statsRes);
-      setOutstandingOrders(ordersRes.slice(0, 10));
+
+      const [ordersRes, logsRes, todosRes, actRes] = results.map(r =>
+        r.status === 'fulfilled' ? r.value : []
+      );
+
+      // Compute stats and filter outstanding orders from the full list
+      const allOrders = ordersRes;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      setStats({
+        totalOutstanding: allOrders
+          .filter(o => o.status === 'outstanding')
+          .reduce((sum, o) => sum + Number(o.price || 0), 0),
+        totalDeposits: allOrders
+          .filter(o => o.status !== 'delivered')
+          .reduce((sum, o) => sum + Number(o.depositPaid || 0), 0),
+        completedToday: allOrders.filter(o => {
+          if (o.status !== 'delivered') return false;
+          const updated = o.updatedAt?.toDate?.() || new Date(0);
+          return updated >= today;
+        }).length,
+        pendingDeliveries: allOrders.filter(o => o.status === 'ready').length,
+      });
+
+      setOutstandingOrders(allOrders.filter(o => o.status === 'outstanding').slice(0, 10));
       setRecentLogs(logsRes);
       setTodoList(todosRes);
       setRecentActivity(actRes);
