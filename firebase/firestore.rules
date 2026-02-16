@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ───────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserData().role == 'admin';
+    }
+
+    // ─── Users ──────────────────────────────────────────────
+    match /users/{userId} {
+      // Anyone signed in can read user profiles (for member lists)
+      allow read: if isSignedIn();
+      // Users can create their own profile on signup
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      // Users can update their own profile (except role)
+      allow update: if isSignedIn() && (
+        request.auth.uid == userId && !('role' in request.resource.data) ||
+        request.auth.uid == userId && request.resource.data.role == resource.data.role ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ─── Orders ─────────────────────────────────────────────
+    match /orders/{orderId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Quotes ─────────────────────────────────────────────
+    match /quotes/{quoteId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Misc Logs ──────────────────────────────────────────
+    match /misc_logs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Todos ──────────────────────────────────────────────
+    match /todos/{todoId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      // Anyone can update (for toggling completion), admin can edit content
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Posters ────────────────────────────────────────────
+    match /posters/{posterId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Activity Log ───────────────────────────────────────
+    match /activity/{activityId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+    }
+  }
+}
