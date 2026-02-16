@@ -2,17 +2,8 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import {
-  LayoutDashboard,
-  ClipboardList,
-  FileText,
-  ScrollText,
-  CheckSquare,
-  Image,
-  Sun,
-  Moon,
-  LogOut,
-  Menu,
-  X,
+  LayoutDashboard, ClipboardList, FileText, ScrollText,
+  CheckSquare, Image, Sun, Moon, LogOut, Menu, X, ShieldCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -55,14 +46,24 @@ export default function Sidebar() {
             {label}
           </NavLink>
         ))}
+
+        {/* Admin link — only visible to admins */}
+        {isAdmin && (
+          <NavLink to="/admin" className={linkClasses} onClick={() => setMobileOpen(false)}>
+            <ShieldCheck size={18} />
+            Admin Panel
+          </NavLink>
+        )}
       </nav>
 
       {/* Footer */}
       <div className="px-3 py-4 border-t border-parchment-200 dark:border-wood-800 space-y-2">
         {/* User info */}
         <div className="px-4 py-2">
-          <p className="text-sm font-medium truncate">{profile?.display_name}</p>
-          <p className="text-xs text-wood-500 dark:text-wood-400 capitalize">{profile?.role}</p>
+          <p className="text-sm font-medium truncate">{profile?.characterName || profile?.displayName}</p>
+          <p className="text-xs text-wood-500 dark:text-wood-400">
+            @{profile?.username} &middot; <span className="capitalize">{profile?.role}</span>
+          </p>
         </div>
 
         {/* Theme toggle */}

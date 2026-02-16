@@ -7,6 +7,7 @@ import QuotesPage from './pages/QuotesPage';
 import LogsPage from './pages/LogsPage';
 import TodosPage from './pages/TodosPage';
 import PostersPage from './pages/PostersPage';
+import AdminPage from './pages/AdminPage';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/logs" element={<LogsPage />} />
         <Route path="/todos" element={<TodosPage />} />
         <Route path="/posters" element={<PostersPage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
     </Routes>
   );

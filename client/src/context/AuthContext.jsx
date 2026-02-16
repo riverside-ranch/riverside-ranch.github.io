@@ -11,9 +11,18 @@ import { auth, db } from '../lib/firebase';
 
 const AuthContext = createContext(null);
 
+// Master admin username — gets admin role on signup automatically
+const MASTER_ADMIN = 'theodorelockheart';
+
+// We use username@riverside.ranch as a fake email for Firebase Auth
+// Users never see this — they only interact with their username
+function usernameToEmail(username) {
+  return `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@riverside.ranch`;
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);          // Firebase Auth user
-  const [profile, setProfile] = useState(null);     // Firestore user doc
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,22 +45,28 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function signIn(email, password) {
+  async function signIn(username, password) {
+    const email = usernameToEmail(username);
     const { user: fbUser } = await signInWithEmailAndPassword(auth, email, password);
     await loadProfile(fbUser.uid);
   }
 
-  async function signUp(email, password, displayName) {
+  async function signUp(username, characterName, password) {
+    const email = usernameToEmail(username);
+    const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
+
     const { user: fbUser } = await createUserWithEmailAndPassword(auth, email, password);
 
-    // Set Firebase Auth display name
-    await updateProfile(fbUser, { displayName });
+    await updateProfile(fbUser, { displayName: characterName });
 
-    // Create Firestore user profile (first user = admin, rest = member)
+    // Master admin gets admin role, everyone else is member
+    const role = cleanUsername === MASTER_ADMIN ? 'admin' : 'member';
+
     await setDoc(doc(db, 'users', fbUser.uid), {
-      email,
-      displayName,
-      role: 'member',
+      username: cleanUsername,
+      characterName,
+      displayName: characterName,
+      role,
       createdAt: serverTimestamp(),
     });
 
@@ -64,23 +79,16 @@ export function AuthProvider({ children }) {
     setProfile(null);
   }
 
-  // Helper that pages pass to API calls — combines auth uid + Firestore displayName
   const currentUser = user && profile
-    ? { uid: user.uid, displayName: profile.displayName }
+    ? { uid: user.uid, displayName: profile.characterName || profile.displayName }
     : null;
 
   const isAdmin = profile?.role === 'admin';
 
   return (
     <AuthContext.Provider value={{
-      user,
-      profile,
-      currentUser,
-      loading,
-      isAdmin,
-      signIn,
-      signUp,
-      signOut,
+      user, profile, currentUser, loading, isAdmin,
+      signIn, signUp, signOut,
     }}>
       {children}
     </AuthContext.Provider>

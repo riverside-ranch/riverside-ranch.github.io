@@ -6,9 +6,9 @@ import toast from 'react-hot-toast';
 export default function LoginPage() {
   const { user, loading, signIn, signUp } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [characterName, setCharacterName] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) return null;
@@ -19,14 +19,27 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       if (isSignUp) {
-        await signUp(email, password, displayName);
-        toast.success('Account created! You may need to verify your email.');
+        if (username.length < 3) {
+          toast.error('Username must be at least 3 characters');
+          setSubmitting(false);
+          return;
+        }
+        await signUp(username, characterName, password);
+        toast.success('Welcome to Riverside Ranch!');
       } else {
-        await signIn(email, password);
+        await signIn(username, password);
         toast.success('Welcome back!');
       }
     } catch (err) {
-      toast.error(err.message);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        toast.error('Invalid username or password');
+      } else if (err.code === 'auth/email-already-in-use') {
+        toast.error('That username is already taken');
+      } else if (err.code === 'auth/weak-password') {
+        toast.error('Password must be at least 6 characters');
+      } else {
+        toast.error(err.message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -49,31 +62,34 @@ export default function LoginPage() {
         {/* Form */}
         <div className="card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="label">Username</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g. theodorelockheart"
+                value={username}
+                onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                required
+                minLength={3}
+              />
+              <p className="text-xs text-wood-400 mt-1">Letters and numbers only, no spaces</p>
+            </div>
+
             {isSignUp && (
               <div>
-                <label className="label">Display Name</label>
+                <label className="label">Character Name</label>
                 <input
                   type="text"
                   className="input"
-                  placeholder="Your ranch name"
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
+                  placeholder="e.g. Theodore Lockheart"
+                  value={characterName}
+                  onChange={e => setCharacterName(e.target.value)}
                   required={isSignUp}
                 />
+                <p className="text-xs text-wood-400 mt-1">Your in-game character name</p>
               </div>
             )}
-
-            <div>
-              <label className="label">Email</label>
-              <input
-                type="email"
-                className="input"
-                placeholder="you@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
-            </div>
 
             <div>
               <label className="label">Password</label>
