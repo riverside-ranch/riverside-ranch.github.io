@@ -9,8 +9,8 @@ export default function AppLayout() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-wood-300 border-t-wood-700 rounded-full animate-spin mx-auto" />
-          <p className="mt-3 text-sm text-wood-600 dark:text-wood-400">Loading...</p>
+          <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin mx-auto" />
+          <p className="mt-3 text-sm text-parchment-600 dark:text-wood-300">Loading...</p>
         </div>
       </div>
     );

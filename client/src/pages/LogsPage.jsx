@@ -17,7 +17,7 @@ const categoryColors = {
 };
 
 export default function LogsPage() {
-  const { isAdmin, currentUser } = useAuth();
+  const { isAdmin, isGuest, currentUser } = useAuth();
   const [logList, setLogList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('all');
@@ -93,17 +93,17 @@ export default function LogsPage() {
   return (
     <div>
       <PageHeader title="Misc Log" description="Track completed ranch tasks and activities."
-        actions={<button onClick={() => setShowForm(true)} className="btn-primary"><Plus size={16} /> New Entry</button>} />
+        actions={!isGuest && <button onClick={() => setShowForm(true)} className="btn-primary"><Plus size={16} /> New Entry</button>} />
 
       <div className="flex flex-wrap gap-2 mb-6">
-        <button onClick={() => setCategory('all')} className={`btn-sm rounded-full ${category === 'all' ? 'bg-wood-700 text-white' : 'btn-secondary'}`}>All</button>
+        <button onClick={() => setCategory('all')} className={`btn-sm rounded-full ${category === 'all' ? 'bg-brand-500 text-white' : 'btn-secondary'}`}>All</button>
         {LOG_CATEGORIES.map(c => (
-          <button key={c.value} onClick={() => setCategory(c.value)} className={`btn-sm rounded-full ${category === c.value ? 'bg-wood-700 text-white' : 'btn-secondary'}`}>{c.label}</button>
+          <button key={c.value} onClick={() => setCategory(c.value)} className={`btn-sm rounded-full ${category === c.value ? 'bg-brand-500 text-white' : 'btn-secondary'}`}>{c.label}</button>
         ))}
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-wood-300 border-t-wood-700 rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" /></div>
       ) : logList.length === 0 ? (
         <EmptyState icon={ScrollText} title="No log entries" description="Start logging ranch activities" />
       ) : (
@@ -115,7 +115,7 @@ export default function LogsPage() {
                   <span className={`badge text-xs ${categoryColors[log.category]}`}>{log.category}</span>
                   <p className="text-sm font-medium">{log.description}</p>
                 </div>
-                <p className="text-xs text-wood-400 mt-1">{log.userName} &middot; {formatDateTime(log.createdAt)}</p>
+                <p className="text-xs text-parchment-400 mt-1">{log.userName} &middot; {formatDateTime(log.createdAt)}</p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 {log.amount != null && (

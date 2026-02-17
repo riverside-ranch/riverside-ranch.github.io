@@ -1,24 +1,25 @@
 import { useState, useEffect } from 'react';
-import { users } from '../../lib/api';
+import { users, prices as pricesApi } from '../../lib/api';
+import { calculateOrderTotals, generateItemsDescription } from '../../lib/utils';
+import ItemPicker from '../shared/ItemPicker';
 
 export default function OrderForm({ initial, onSubmit, onCancel, submitting }) {
   const [form, setForm] = useState({
     customerName: '',
     contactInfo: '',
-    description: '',
-    price: '',
-    depositPaid: '',
     notes: '',
     assignedTo: '',
     assignedToName: '',
     ...initial,
-    price: initial?.price ?? '',
-    depositPaid: initial?.depositPaid ?? '',
   });
+  const [items, setItems] = useState(initial?.items || []);
+  const [discount, setDiscount] = useState(initial?.discount ?? '');
   const [members, setMembers] = useState([]);
+  const [catalog, setCatalog] = useState([]);
 
   useEffect(() => {
     users.list().then(setMembers).catch(() => {});
+    pricesApi.list().then(setCatalog).catch(() => {});
   }, []);
 
   function handleChange(e) {
@@ -38,10 +39,15 @@ export default function OrderForm({ initial, onSubmit, onCancel, submitting }) {
 
   function handleSubmit(e) {
     e.preventDefault();
+    const { subtotal, total } = calculateOrderTotals(items, discount);
+    const description = generateItemsDescription(items);
     onSubmit({
       ...form,
-      price: parseFloat(form.price) || 0,
-      depositPaid: parseFloat(form.depositPaid) || 0,
+      items,
+      subtotal,
+      discount: Number(discount) || 0,
+      price: total,
+      description: description || form.customerName,
       assignedTo: form.assignedTo || null,
       assignedToName: form.assignedToName || null,
     });
@@ -60,21 +66,13 @@ export default function OrderForm({ initial, onSubmit, onCancel, submitting }) {
         </div>
       </div>
 
-      <div>
-        <label className="label">Order Description *</label>
-        <textarea name="description" className="input" rows={3} value={form.description} onChange={handleChange} required />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="label">Price ($)</label>
-          <input name="price" type="number" step="0.01" min="0" className="input" value={form.price} onChange={handleChange} />
-        </div>
-        <div>
-          <label className="label">Deposit Paid ($)</label>
-          <input name="depositPaid" type="number" step="0.01" min="0" className="input" value={form.depositPaid} onChange={handleChange} />
-        </div>
-      </div>
+      <ItemPicker
+        items={items}
+        onChange={setItems}
+        prices={catalog}
+        discount={discount}
+        onDiscountChange={setDiscount}
+      />
 
       <div>
         <label className="label">Assigned To</label>

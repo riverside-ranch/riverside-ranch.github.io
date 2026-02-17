@@ -78,7 +78,7 @@ export default function PostersPage() {
         actions={isAdmin && <button onClick={() => setShowUpload(true)} className="btn-primary"><Plus size={16} /> Upload Poster</button>} />
 
       {loading ? (
-        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-wood-300 border-t-wood-700 rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" /></div>
       ) : posterList.length === 0 ? (
         <EmptyState icon={Image} title="No posters yet" description={isAdmin ? 'Upload ranch posters for the gallery' : 'No posters have been uploaded yet'} />
       ) : (
@@ -91,7 +91,7 @@ export default function PostersPage() {
               </div>
               <div className="p-4">
                 <h3 className="font-semibold text-sm">{poster.title}</h3>
-                <p className="text-xs text-wood-400 mt-1">{formatDate(poster.createdAt)}</p>
+                <p className="text-xs text-parchment-400 mt-1">{formatDate(poster.createdAt)}</p>
                 <div className="flex items-center gap-2 mt-3">
                   <button onClick={() => handleCopyUrl(poster)} className="btn-secondary btn-sm flex-1">
                     {copiedId === poster.id ? <Check size={14} /> : <Copy size={14} />}
@@ -119,13 +119,13 @@ export default function PostersPage() {
               onClick={() => fileRef.current?.click()}
               className="border-2 border-dashed border-parchment-300 dark:border-wood-700 rounded-lg p-8 text-center cursor-pointer hover:border-wood-500 transition-colors"
             >
-              <Upload size={32} className="mx-auto text-wood-400 mb-2" />
+              <Upload size={32} className="mx-auto text-parchment-400 mb-2" />
               {selectedFile ? (
-                <p className="text-sm text-wood-700 dark:text-parchment-200 font-medium">{selectedFile.name}</p>
+                <p className="text-sm text-parchment-700 dark:text-parchment-200 font-medium">{selectedFile.name}</p>
               ) : (
                 <>
-                  <p className="text-sm text-wood-500">Click to select an image</p>
-                  <p className="text-xs text-wood-400 mt-1">PNG, JPG, GIF up to 10MB</p>
+                  <p className="text-sm text-parchment-400">Click to select an image</p>
+                  <p className="text-xs text-parchment-400 mt-1">PNG, JPG, GIF up to 10MB</p>
                 </>
               )}
             </div>

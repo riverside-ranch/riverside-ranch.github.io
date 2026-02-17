@@ -6,7 +6,27 @@
       "Bash(gh auth login:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(gh repo create:*)",
+      "Bash(gh repo rename:*)",
+      "Bash(git remote get-url:*)",
+      "Bash(npm install:*)",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(gh auth setup-git:*)",
+      "Bash(npx gh-pages:*)",
+      "Bash(npm run build:*)",
+      "Bash(gh api:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(npx firebase deploy:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(where:*)",
+      "Bash(firebase projects:list:*)",
+      "Bash(firebase login:*)",
+      "Bash(firebase use:*)",
+      "Bash(node -e:*)",
+      "Bash(npx vite build:*)",
+      "Bash(find:*)"
     ]
   }
 }

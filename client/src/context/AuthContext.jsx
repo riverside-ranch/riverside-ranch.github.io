@@ -59,8 +59,8 @@ export function AuthProvider({ children }) {
 
     await updateProfile(fbUser, { displayName: characterName });
 
-    // Master admin gets admin role, everyone else is member
-    const role = cleanUsername === MASTER_ADMIN ? 'admin' : 'member';
+    // Master admin gets admin role, everyone else starts as guest until promoted
+    const role = cleanUsername === MASTER_ADMIN ? 'admin' : 'guest';
 
     await setDoc(doc(db, 'users', fbUser.uid), {
       username: cleanUsername,
@@ -84,10 +84,11 @@ export function AuthProvider({ children }) {
     : null;
 
   const isAdmin = profile?.role === 'admin';
+  const isGuest = profile?.role === 'guest';
 
   return (
     <AuthContext.Provider value={{
-      user, profile, currentUser, loading, isAdmin,
+      user, profile, currentUser, loading, isAdmin, isGuest,
       signIn, signUp, signOut,
     }}>
       {children}

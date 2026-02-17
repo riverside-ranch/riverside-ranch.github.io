@@ -46,6 +46,25 @@ export const LOG_CATEGORIES = [
   { value: 'misc', label: 'Misc' },
 ];
 
+export const PRICE_CATEGORIES = [
+  { value: 'livestock', label: 'Livestock' },
+  { value: 'crops', label: 'Crops' },
+  { value: 'goods', label: 'Goods' },
+  { value: 'services', label: 'Services' },
+  { value: 'other', label: 'Other' },
+];
+
+export function calculateOrderTotals(items, discountPercent = 0) {
+  const subtotal = items.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0), 0);
+  const discount = Math.min(Math.max(Number(discountPercent) || 0, 0), 100);
+  const total = subtotal * (1 - discount / 100);
+  return { subtotal, discount, total };
+}
+
+export function generateItemsDescription(items) {
+  return items.map(item => `${item.quantity}x ${item.name}`).join(', ');
+}
+
 export function exportToCSV(data, filename) {
   if (!data.length) return;
 

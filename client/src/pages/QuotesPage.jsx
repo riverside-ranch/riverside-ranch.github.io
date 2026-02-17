@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { quotes as quotesApi } from '../lib/api';
+import { quotes as quotesApi, prices as pricesApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { QUOTE_STATUSES, formatCurrency, formatDate } from '../lib/utils';
+import { QUOTE_STATUSES, formatCurrency, formatDate, calculateOrderTotals, generateItemsDescription } from '../lib/utils';
 import PageHeader from '../components/ui/PageHeader';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 import StatusBadge from '../components/ui/StatusBadge';
+import ItemPicker from '../components/shared/ItemPicker';
 import { Plus, FileText, Search, ArrowRightCircle, Trash2, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function QuotesPage() {
-  const { isAdmin, currentUser } = useAuth();
+  const { isAdmin, isGuest, currentUser } = useAuth();
   const [quoteList, setQuoteList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -18,8 +19,10 @@ export default function QuotesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingQuote, setEditingQuote] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [catalog, setCatalog] = useState([]);
 
   useEffect(() => { loadQuotes(); }, [search, statusFilter]);
+  useEffect(() => { pricesApi.list().then(setCatalog).catch(() => {}); }, []);
 
   async function loadQuotes() {
     try {
@@ -86,13 +89,28 @@ export default function QuotesPage() {
 
   function QuoteForm({ initial }) {
     const [form, setForm] = useState({
-      customerName: '', contactInfo: '', requestedItems: '', estimatedPrice: '', notes: '',
+      customerName: '', contactInfo: '', notes: '',
       ...initial,
-      estimatedPrice: initial?.estimatedPrice ?? '',
     });
+    const [items, setItems] = useState(initial?.items || []);
+    const [discount, setDiscount] = useState(initial?.discount ?? '');
+
+    function onSubmit(e) {
+      e.preventDefault();
+      const { subtotal, total } = calculateOrderTotals(items, discount);
+      const requestedItems = generateItemsDescription(items);
+      handleSubmit({
+        ...form,
+        items,
+        subtotal,
+        discount: Number(discount) || 0,
+        estimatedPrice: total,
+        requestedItems: requestedItems || form.customerName,
+      });
+    }
 
     return (
-      <form onSubmit={e => { e.preventDefault(); handleSubmit(form); }} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">Customer Name *</label>
@@ -103,14 +121,15 @@ export default function QuotesPage() {
             <input className="input" value={form.contactInfo} onChange={e => setForm(f => ({ ...f, contactInfo: e.target.value }))} required />
           </div>
         </div>
-        <div>
-          <label className="label">Requested Items *</label>
-          <textarea className="input" rows={3} value={form.requestedItems} onChange={e => setForm(f => ({ ...f, requestedItems: e.target.value }))} required />
-        </div>
-        <div>
-          <label className="label">Estimated Price ($)</label>
-          <input type="number" step="0.01" min="0" className="input" value={form.estimatedPrice} onChange={e => setForm(f => ({ ...f, estimatedPrice: e.target.value }))} />
-        </div>
+
+        <ItemPicker
+          items={items}
+          onChange={setItems}
+          prices={catalog}
+          discount={discount}
+          onDiscountChange={setDiscount}
+        />
+
         <div>
           <label className="label">Notes</label>
           <textarea className="input" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
@@ -130,12 +149,12 @@ export default function QuotesPage() {
       <PageHeader
         title="Quotes"
         description="Manage price quotes and convert them to orders."
-        actions={<button onClick={() => setShowForm(true)} className="btn-primary"><Plus size={16} /> New Quote</button>}
+        actions={!isGuest && <button onClick={() => setShowForm(true)} className="btn-primary"><Plus size={16} /> New Quote</button>}
       />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
         <div className="relative flex-1 w-full sm:max-w-xs">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-wood-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-parchment-400" />
           <input className="input pl-9" placeholder="Search quotes..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input w-auto" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
@@ -145,7 +164,7 @@ export default function QuotesPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-wood-300 border-t-wood-700 rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" /></div>
       ) : quoteList.length === 0 ? (
         <EmptyState icon={FileText} title="No quotes found" description="Create your first quote to get started" />
       ) : (
@@ -158,16 +177,17 @@ export default function QuotesPage() {
                     <h3 className="font-semibold">{quote.customerName}</h3>
                     <StatusBadge status={quote.status} type="quote" />
                   </div>
-                  <p className="text-sm text-wood-500 dark:text-wood-400">{quote.contactInfo}</p>
+                  <p className="text-sm text-parchment-500 dark:text-wood-300">{quote.contactInfo}</p>
                   <p className="text-sm mt-2">{quote.requestedItems}</p>
-                  {quote.notes && <p className="text-xs text-wood-400 mt-2 italic">{quote.notes}</p>}
-                  <div className="flex items-center gap-4 mt-3 text-xs text-wood-400">
+                  {quote.discount > 0 && <p className="text-xs text-parchment-400 mt-1">Discount: {quote.discount}%</p>}
+                  {quote.notes && <p className="text-xs text-parchment-400 mt-2 italic">{quote.notes}</p>}
+                  <div className="flex items-center gap-4 mt-3 text-xs text-parchment-400">
                     <span>{formatDate(quote.createdAt)}</span>
-                    <span className="font-semibold text-sm text-wood-700 dark:text-parchment-200">{formatCurrency(quote.estimatedPrice)}</span>
+                    <span className="font-semibold text-sm text-parchment-700 dark:text-parchment-200">{formatCurrency(quote.estimatedPrice)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {quote.status === 'pending' && (
+                  {!isGuest && quote.status === 'pending' && (
                     <>
                       <select className="input w-auto text-xs" value={quote.status} onChange={e => handleStatusChange(quote.id, e.target.value)}>
                         {QUOTE_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -177,7 +197,7 @@ export default function QuotesPage() {
                       </button>
                     </>
                   )}
-                  <button onClick={() => setEditingQuote(quote)} className="btn-ghost btn-sm"><Edit2 size={14} /></button>
+                  {!isGuest && <button onClick={() => setEditingQuote(quote)} className="btn-ghost btn-sm"><Edit2 size={14} /></button>}
                   {isAdmin && (
                     <button onClick={() => handleDelete(quote.id)} className="btn-ghost btn-sm text-red-500"><Trash2 size={14} /></button>
                   )}

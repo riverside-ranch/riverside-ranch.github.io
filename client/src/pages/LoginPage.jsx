@@ -50,13 +50,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-wood-800 flex items-center justify-center mx-auto mb-4">
-            <span className="font-display text-3xl font-bold text-parchment-200">R</span>
-          </div>
-          <h1 className="font-display text-3xl font-bold text-wood-800 dark:text-parchment-100">
+          <img src="/Riverside_Ranch.png" alt="Riverside Ranch" className="w-28 h-28 mx-auto mb-4 object-contain drop-shadow-lg" />
+          <h1 className="font-display text-3xl font-bold text-parchment-800 dark:text-white">
             Riverside Ranch
           </h1>
-          <p className="text-sm text-wood-500 dark:text-wood-400 mt-1">Management System</p>
         </div>
 
         {/* Form */}
@@ -73,7 +70,7 @@ export default function LoginPage() {
                 required
                 minLength={3}
               />
-              <p className="text-xs text-wood-400 mt-1">Letters and numbers only, no spaces</p>
+              <p className="text-xs text-parchment-400 mt-1">Letters and numbers only, no spaces</p>
             </div>
 
             {isSignUp && (
@@ -87,7 +84,7 @@ export default function LoginPage() {
                   onChange={e => setCharacterName(e.target.value)}
                   required={isSignUp}
                 />
-                <p className="text-xs text-wood-400 mt-1">Your in-game character name</p>
+                <p className="text-xs text-parchment-400 mt-1">Your in-game character name</p>
               </div>
             )}
 
@@ -112,7 +109,7 @@ export default function LoginPage() {
           <div className="mt-4 text-center">
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-wood-600 dark:text-wood-400 hover:underline"
+              className="text-sm text-brand-500 dark:text-brand-400 hover:underline"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
